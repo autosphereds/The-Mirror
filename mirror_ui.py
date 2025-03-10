@@ -1,4 +1,9 @@
 import streamlit as st
+import openai
+
+# OpenAI API Key (You'll need to set this securely in a real deployment)
+OPENAI_API_KEY = "your-api-key-here"
+openai.api_key = OPENAI_API_KEY
 
 # Sidebar navigation
 st.sidebar.title("The Mirror")
@@ -13,9 +18,30 @@ if page == "Consultant Dashboard":
 elif page == "Employee Interview":
     st.title("Employee Interview Interface")
     st.subheader("AI-Driven Chatbot")
+    
     st.write("- Answer questions at your convenience\n- AI refines questions based on responses\n- Provides real-time feedback")
-    st.text_area("Chat here...")
-    st.button("Submit Response")
+    
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = []
+    
+    def get_ai_response(user_input):
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an AI interviewer gathering insights about workplace operations. Ask follow-up questions based on employee responses to refine your understanding of their work challenges."},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        return response["choices"][0]["message"]["content"]
+    
+    user_input = st.text_area("Chat here...")
+    if st.button("Submit Response") and user_input:
+        ai_response = get_ai_response(user_input)
+        st.session_state.conversation.append(("User", user_input))
+        st.session_state.conversation.append(("AI", ai_response))
+    
+    for speaker, message in st.session_state.conversation:
+        st.write(f"**{speaker}:** {message}")
 
 elif page == "Leadership Reports":
     st.title("Leadership Reports & Insights")
